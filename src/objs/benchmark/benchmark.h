@@ -1,7 +1,7 @@
 #pragma once
 
 #include <list>
-#include <benchmark/observer.h>
+#include "observer.h"
 
 #define benchmark(title, runs) \
 	for (auto o : benchmark::observers) {\

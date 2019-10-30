@@ -5,11 +5,11 @@
 #include <list>
 #include <thread>
 #include <sstream>
-#include <test/live_terminal.h>
-#include <test/json_logger.h>
-#include <parallel/atomic.h>
-#include <parallel/execution_queue.h>
-#include <utils/warnings.h>
+#include "live_terminal.h"
+#include "json_logger.h"
+#include "../parallel/atomic.h"
+#include "../parallel/execution_queue.h"
+#include "../utils/warnings.h"
 #include <iostream>
 
 #define ASSERT_GENERATE_LABEL_PASTE_EXPAND(labelid, line) labelid ## _ ## line

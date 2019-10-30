@@ -5,7 +5,7 @@
 #include <thread>
 #include <list>
 #include <functional>
-#include <parallel/atomic.h>
+#include "atomic.h"
 
 namespace parallel {
 
