@@ -12,26 +12,28 @@ set(tests_src_dir "tests")
 set(objs_src_dir "src/objs")
 set(programs_src_dir "src/main")
 
+set(external_include_dir "external_dependencies/include")
+set(external_lib_dir "external_dependencies/lib")
+
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
     "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 
-	set(external_libraries "pthread")
-	set(compiler_flags "-fdiagnostics-color=always -Wall -Wextra")
+	set(CMAKE_CXX_FLAGS "-fdiagnostics-color=always -Wall -Wextra")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 
-	set(external_libraries "")
-    set(compiler_flags "/W4 /EHsc")
+	set(CMAKE_CXX_FLAGS "/W4 /EHsc")
 
 endif()
 
-set(CMAKE_CXX_FLAGS "${compiler_flags}")
-
-include_directories(${objs_src_dir})
+include_directories(${objs_src_dir} ${external_include_dir})
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY release/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY release/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY release/bin)
+
+file(GLOB_RECURSE external_shared_libraries "${external_lib_dir}/*.so")
+file(GLOB_RECURSE external_static_libraries "${external_lib_dir}/*.a")
 
 file(GLOB_RECURSE objs_src_files "${objs_src_dir}/*.cpp")
 foreach(obj_src_file  ${objs_src_files})
@@ -50,7 +52,7 @@ foreach(test_src_file ${tests_src_files})
 		PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY "tests"
 	)
-	target_link_libraries(${test_binary} ${external_libraries})
+	target_link_libraries(${test_binary} ${external_shared_libraries} ${external_static_libraries})
 	add_test(NAME ${test_binary} COMMAND ${test_binary})
 endforeach()
 
@@ -59,7 +61,7 @@ foreach(program_src_file ${programs_src_files})
 	string(REGEX REPLACE "(^(.*/)*${programs_src_dir}/)|(.cpp)" "" program_binary ${program_src_file})
 	string(REGEX REPLACE "/" "_" program_binary ${program_binary})
 	add_executable(${program_binary} ${program_src_file} ${all_obj_binaries})
-	target_link_libraries(${program_binary} ${external_libraries})
+	target_link_libraries(${program_binary} ${external_shared_libraries} ${external_static_libraries})
 endforeach()
 
 if (${BUILD_STATIC_LIBRARY})

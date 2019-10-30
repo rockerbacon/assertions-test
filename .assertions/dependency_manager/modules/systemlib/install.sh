@@ -1,7 +1,9 @@
 #!/bin/bash
 
-SYSTEM_LIBRARY_DIRS=("/lib")
-SYSTEM_LIBRARY_DIRS+=("/usr/lib")
+SYSTEM_LIBRARY_DIRS=("/lib/x86_64-linux-gnu")
+SYSTEM_LIBRARY_DIRS+=("/usr/lib/x86_64-linux-gnu")
+SYSTEM_LIBRARY_DIRS+=("/lib/i386-linux-gnu")
+SYSTEM_LIBRARY_DIRS+=("/usr/lib/i386-linux-gnu")
 
 SCRIPT_DIR=$(realpath $(dirname $0))
 PROJECT_ROOT=$(realpath "$SCRIPT_DIR/../../../../")
@@ -27,7 +29,7 @@ echo "Info: searching for library file '${FULL_LIBRARY_NAME}'" 1>&2
 for LIBRARY_DIR in ${SYSTEM_LIBRARY_DIRS[@]}
 do
 	echo "Info: searching folder ${LIBRARY_DIR}" 1>&2
-	LIBRARY_FILE=$(find "$LIBRARY_DIR" -name "$FULL_LIBRARY_NAME" -print -quit)
+	LIBRARY_FILE=$(find "$LIBRARY_DIR" -regex ".*$FULL_LIBRARY_NAME.*" -print -quit)
 	if [ "$LIBRARY_FILE" != "" ]; then
 		break
 	fi

@@ -2,6 +2,8 @@
 
 PROJECT_ROOT=$(realpath $(dirname $0))
 BUILD_DIR="$PROJECT_ROOT/build"
+DEPENDENCIES_DIR="$PROJECT_ROOT/external_dependencies"
+DEPENDENCY_MANAGER_DIR="$PROJECT_ROOT/.assertions/dependency_manager"
 
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
@@ -38,20 +40,41 @@ else
 fi
 ######### Commnd Line Interface #########
 
+update_dependencies_if_needed () {
+	DEPENDENCIES_OUTDATED=""
+	if [ ! -d "$DEPENDENCIES_DIR" ]; then
+		DEPENDENCIES_OUTDATED=true
+	else
+		DEPENDENCIES_LIST_MODIFICATION_TIME=$(stat -c %Y "$DEPENDENCY_MANAGER_DIR/install.sh")
+		DEPENDENCIES_DIR_MODIFICATION_TIME=$(stat -c %Y "$DEPENDENCIES_DIR")
+		if [ "$DEPENDENCIES_LIST_MODIFICATION_TIME" -gt "$DEPENDENCIES_DIR_MODIFICATION_TIME" ]; then
+			DEPENDENCIES_OUTDATED=true
+		fi
+	fi
+	if [ $DEPENDENCIES_OUTDATED ]; then
+		echo "Info: updating dependencies..."
+		"$PROJECT_ROOT"/dependencies.sh install
+	fi
+}
+
 if [ "$ACTION" == "clean" ]; then
 	rm -rf "$BUILD_DIR"
 elif [ "$ACTION" == "cmake" ]; then
+	update_dependencies_if_needed
 	cmake "$PROJECT_ROOT"
 elif [ "$ACTION" == "compile-commands" ]; then
+	update_dependencies_if_needed
 	cmake "$PROJECT_ROOT"
 	ln -s "$BUILD_DIR/compile_commands.json" "$PROJECT_ROOT/compile_commands.json"
 elif [ "$ACTION" == "all" ]; then
-	if [ ! -f "$BUILD_DIR/Makefile" ]; then
+	update_dependencies_if_needed
+	if [ ! -f "$BUILD_DIR/Makefile" ] || [ $DEPENDENCIES_OUTDATED ]; then
 		cmake "$PROJECT_ROOT"
 	fi
 	make
 elif [ "$ACTION" == "target" ]; then
-	if [ ! -f "$BUILD_DIR/Makefile" ]; then
+	update_dependencies_if_needed
+	if [ ! -f "$BUILD_DIR/Makefile" ] || [ $DEPENDENCIES_OUTDATED ]; then
 		cmake "$PROJECT_ROOT"
 	fi
 	for TARGET in "${TARGETS[@]}"

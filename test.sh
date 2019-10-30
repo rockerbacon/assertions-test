@@ -67,6 +67,7 @@ do
 	if [ -d "$CURRENT_TEST" ]; then
 		add_tests_from_directory
 	else
+		echo "Info: initializing tests from '$CURRENT_TEST'..."
 		BUILD_OUTPUT=$(./build.sh target "$CURRENT_TEST" 2>&1)
 		BUILD_STATUS="$?"
 		if [ ! "$BUILD_STATUS" -eq 0 ]; then

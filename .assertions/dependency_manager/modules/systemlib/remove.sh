@@ -13,7 +13,7 @@ if [ "$LIBRARY" == "" ]; then
 fi
 ################### Command Line Interface #########################
 
-LIBRARY_LINK=$(find "$DEPENDENCIES_LIB_DIR" -maxdepth 1 -regextype posix-egrep -regex "$DEPENDENCIES_LIB_DIR/lib${LIBRARY}\.(so|a)$")
+LIBRARY_LINK=$(find "$DEPENDENCIES_LIB_DIR" -maxdepth 1 -regextype posix-egrep -regex "$DEPENDENCIES_LIB_DIR/lib${LIBRARY}\.(so|a)")
 
 if [ "$LIBRARY_LINK" == "" ]; then
 	echo "Info: dependency not linked to project" 1>&2
