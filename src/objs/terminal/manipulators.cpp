@@ -1,4 +1,4 @@
-#include <terminal/manipulators.h>
+#include "manipulators.h"
 
 using namespace std;
 using namespace terminal;

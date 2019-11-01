@@ -1,8 +1,8 @@
-#include <test/assert.h>
-#include <benchmark/stopwatch.h>
-#include <test/live_terminal.h>
+#include "assert.h"
+#include <stopwatch/stopwatch.h>
+#include "live_terminal.h"
 #include <unordered_map>
-#include <test/low_level_error_handler.h>
+#include "low_level_error_handler.h"
 #include <csetjmp>
 
 #define SUCCESS_TEXT_STYLE ::terminal::stylize_color(::terminal::bright(::terminal::color_style::GREEN))
@@ -30,7 +30,7 @@ const char* assert_failed::what(void) const noexcept {
 
 void test::queue_test_for_execution (const string &test_case_description, unsigned row_in_terminal, const test_case& test) {
 	test::test_execution_queue.push_back([=]() {
-		benchmark::Stopwatch stopwatch;
+		Stopwatch stopwatch;
 		chrono::high_resolution_clock::duration test_duration;
 		jmp_buf jump_buffer;
 		string low_level_error_message;

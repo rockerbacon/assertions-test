@@ -1,7 +1,7 @@
-#include <test/json_logger.h>
+#include "json_logger.h"
 
 #include <ostream>
-#include <benchmark/stopwatch.h>
+#include <stopwatch/stopwatch.h>
 
 using namespace test;
 using namespace std;
