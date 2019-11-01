@@ -1,4 +1,4 @@
-#include <benchmark/observer.h>
+#include "observer.h"
 #include <sstream>
 #include <iostream>
 #include <ctime>

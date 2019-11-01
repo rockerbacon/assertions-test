@@ -1,8 +1,8 @@
-#include <test/live_terminal.h>
-#include <terminal/manipulators.h>
+#include "live_terminal.h"
+#include "../terminal/manipulators.h"
 #include <iostream>
-#include <benchmark/stopwatch.h>
-#include <utils/warnings.h>
+#include <stopwatch/stopwatch.h>
+#include "../utils/warnings.h"
 
 using namespace std;
 using namespace test;

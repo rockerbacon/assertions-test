@@ -1,7 +1,7 @@
 #pragma once
 
 #include <sstream>
-#include "stopwatch.h"
+#include <stopwatch/stopwatch.h>
 #include <list>
 #include <fstream>
 
