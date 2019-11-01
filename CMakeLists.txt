@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project("assertions" CXX)
+project("assertions-test" CXX)
 enable_testing()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
