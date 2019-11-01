@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project("assertions" CXX)
+project("assertions-test" CXX)
 enable_testing()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -26,18 +26,18 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 
 endif()
 
-include_directories(${objs_src_dir} ${external_include_dir})
+include_directories(${external_include_dir})
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY release/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY release/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY release/bin)
 
-file(GLOB_RECURSE external_shared_libraries "${external_lib_dir}/*.so")
-file(GLOB_RECURSE external_static_libraries "${external_lib_dir}/*.a")
+file(GLOB_RECURSE external_libraries FOLLOW_SYMLINKS "${external_lib_dir}/*.*")
 
 file(GLOB_RECURSE objs_src_files "${objs_src_dir}/*.cpp")
 foreach(obj_src_file  ${objs_src_files})
 	string(REGEX REPLACE "(^(.*/)*${objs_src_dir}/(.*/)*)|(\.cpp)" "" obj_binary ${obj_src_file})
+	string(APPEND obj_binary ".o")
 	add_library(${obj_binary} OBJECT ${obj_src_file})
 	list(APPEND all_obj_binaries $<TARGET_OBJECTS:${obj_binary}>)
 endforeach()
@@ -52,7 +52,8 @@ foreach(test_src_file ${tests_src_files})
 		PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY "tests"
 	)
-	target_link_libraries(${test_binary} ${external_shared_libraries} ${external_static_libraries})
+	target_include_directories(${test_binary} PRIVATE ${objs_src_dir})
+	target_link_libraries(${test_binary} ${external_libraries})
 	add_test(NAME ${test_binary} COMMAND ${test_binary})
 endforeach()
 
@@ -61,7 +62,8 @@ foreach(program_src_file ${programs_src_files})
 	string(REGEX REPLACE "(^(.*/)*${programs_src_dir}/)|(.cpp)" "" program_binary ${program_src_file})
 	string(REGEX REPLACE "/" "_" program_binary ${program_binary})
 	add_executable(${program_binary} ${program_src_file} ${all_obj_binaries})
-	target_link_libraries(${program_binary} ${external_shared_libraries} ${external_static_libraries})
+	target_include_directories(${program_binary} PRIVATE ${objs_src_dir})
+	target_link_libraries(${program_binary} ${external_libraries})
 endforeach()
 
 if (${BUILD_STATIC_LIBRARY})
