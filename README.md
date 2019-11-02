@@ -1,6 +1,6 @@
 ## Introduction
 
-Test framework for the Assertions C++ Framework.
+Test framework for the [Assertions C++ Framework](https://github.com/rockerbacon/assertions).
 
 All documentation is available on the [ASSERTIONS WIKI](https://github.com/rockerbacon/assertions/wiki/Automated-Testing).
 
