@@ -1,6 +1,6 @@
 ## Introduction
 
-Test and benchmark libraries for the Assertions C++ Framework.
+Test framework for the Assertions C++ Framework.
 
 All documentation is available on the [ASSERTIONS WIKI](https://github.com/rockerbacon/assertions/wiki/Automated-Testing).
 
