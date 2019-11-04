@@ -5,12 +5,13 @@
 #include <list>
 #include <thread>
 #include <sstream>
+#include <iostream>
 #include "observers/live_terminal.h"
 #include "observers/json_logger.h"
 #include "parallel/atomic.h"
 #include "parallel/execution_queue.h"
 #include "utils/warnings.h"
-#include <iostream>
+#include "fixture.h"
 
 #define ASSERT_GENERATE_LABEL_PASTE_EXPAND(labelid, line) labelid ## _ ## line
 #define ASSERT_GENERATE_LABEL_PASTE(labelid, line) ASSERT_GENERATE_LABEL_PASTE_EXPAND(labelid, line)
@@ -57,7 +58,7 @@
 			break;\
 		} else\
 			ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_CASE_BLOCK):\
-				assert_test_case_block = []()
+				assert_test_case_block = [&context = std::as_const(context)]()
 
 #define assert(actual_value, comparison_operator, expected_value)\
 	::test::is_logic_operator([=]{ return #comparison_operator; });\
@@ -85,6 +86,10 @@
 		}\
 		return **::test::failed_tests_count;\
 	}
+
+#define setup(fixture_type)\
+	::test::test_context<::std::function<fixture_type()>> context;\
+	context	= []()
 
 namespace test {
 
