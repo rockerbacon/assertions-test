@@ -11,16 +11,17 @@ namespace test {
 		public:
 			typedef decltype(std::declval<function_type>()()) fixture_type;
 		private:
-			mutable std::mutex mutex;
+			std::mutex& mutex;
 			mutable bool initialized;
 			function_type setup;
 			std::function<void(fixture_type&)> teardown;
-			mutable fixture_type fixture_singleton;
-
+			fixture_type &fixture_singleton;
 
 		public:
-			test_context()
-				:	initialized(false)
+			test_context(std::mutex& mutex, fixture_type& fixture_singleton)
+				:	mutex(mutex),
+					initialized(false),
+					fixture_singleton(fixture_singleton)
 			{}
 
 			test_context& operator=(const function_type &function) {
@@ -28,7 +29,11 @@ namespace test {
 				return *this;
 			}
 
-			const fixture_type& fixture() const {
+			fixture_type mutable_fixture() const {
+				return this->setup();
+			}
+
+			operator const fixture_type& () const {
 				if (!this->initialized) {
 					std::lock_guard<std::mutex> lock(this->mutex);
 					if (!this->initialized) {
@@ -38,10 +43,15 @@ namespace test {
 				}
 				return this->fixture_singleton;
 			}
-
-			fixture_type mutable_fixture() const {
-				return this->setup();
-			}
 	};
+
 }
+
+namespace std {
+	template<typename function_type>
+	typename test::test_context<function_type>::fixture_type copy(const test::test_context<function_type>& context) {
+		return context.mutable_fixture();
+	}
+}
+
 

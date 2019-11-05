@@ -58,7 +58,7 @@
 			break;\
 		} else\
 			ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_CASE_BLOCK):\
-				assert_test_case_block = [&context = std::as_const(context)]()
+				assert_test_case_block = [=]()
 
 #define assert(actual_value, comparison_operator, expected_value)\
 	::test::is_logic_operator([=]{ return #comparison_operator; });\
@@ -87,9 +87,11 @@
 		return **::test::failed_tests_count;\
 	}
 
-#define setup(fixture_type)\
-	::test::test_context<::std::function<fixture_type()>> context;\
-	context	= []()
+#define setup(fixture_type, fixture_label)\
+	::std::mutex assert_setup_mutex;\
+	fixture_type assert_setup_fixture;\
+	::test::test_context<::std::function<fixture_type()>> fixture_label(assert_setup_mutex, assert_setup_fixture);\
+	fixture_label = []()
 
 namespace test {
 
