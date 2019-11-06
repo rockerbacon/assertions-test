@@ -64,7 +64,7 @@
 			break;\
 		} else\
 			ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_CASE_BLOCK):\
-				assert_test_case_block = [=]() mutable
+				assert_test_case_block = [=]()
 
 #define assert(actual_value, comparison_operator, expected_value)\
 	::test::is_logic_operator([=]{ return #comparison_operator; });\
@@ -104,7 +104,7 @@
 
 #define teardown ;\
 	ASSERT_LABEL_DEFINED(assert_setup_method, "cannot declare teardown without a setup");\
-	*assert_teardown_method = [=]() mutable
+	*assert_teardown_method = [=]()
 
 
 namespace test {
