@@ -17,14 +17,20 @@
 #define ASSERT_GENERATE_LABEL_PASTE(labelid, line) ASSERT_GENERATE_LABEL_PASTE_EXPAND(labelid, line)
 #define ASSERT_GENERATE_LABEL(labelid) ASSERT_GENERATE_LABEL_PASTE(labelid, __LINE__)
 
-#define ASSERT_LABEL_NOT_DEFINED(label, error_message)\
+#define ASSERT_LABEL_DEFINED(label, error_message)\
 	{\
 		using namespace test;\
 		static_assert(!::std::is_same<decltype(label), decltype(::test::label)>(), error_message);\
 	}
 
+#define ASSERT_LABEL_NOT_DEFINED(label, error_message)\
+	{\
+		using namespace test;\
+		static_assert(::std::is_same<decltype(label), decltype(::test::label)>(), error_message);\
+	}
+
 #define test_suite(test_suite_description)\
-	ASSERT_LABEL_NOT_DEFINED(assert_test_suite_block, "cannot declare test_suite outside begin_tests");\
+	ASSERT_LABEL_DEFINED(assert_test_suite_block, "cannot declare test_suite outside begin_tests");\
 	for (auto& observer : ::test::observers) {\
 		(**observer)->test_suite_block_begun(test_suite_description);\
 	}\
@@ -46,7 +52,7 @@
 						ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_SUITE_BLOCK):
 
 #define test_case(test_case_description)\
-	ASSERT_LABEL_NOT_DEFINED(assert_test_case_block, "cannot declare test_case outside test_suite");\
+	ASSERT_LABEL_DEFINED(assert_test_case_block, "cannot declare test_case outside test_suite");\
 	goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_CASE_BLOCK);\
 	while(true)\
 		if (true) {\
@@ -58,13 +64,14 @@
 			break;\
 		} else\
 			ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_CASE_BLOCK):\
-				assert_test_case_block = [=]()
+				assert_test_case_block = [=]() mutable
 
 #define assert(actual_value, comparison_operator, expected_value)\
 	::test::is_logic_operator([=]{ return #comparison_operator; });\
 	if (!((actual_value) comparison_operator (expected_value))) {\
 		::std::stringstream error_message;\
-		error_message << "expected " << #actual_value << ' ' << #comparison_operator << ' ' << #expected_value;\
+		error_message << "expected " << #actual_value << ' ' << #comparison_operator << ' ' << expected_value;\
+		error_message << " but got " << actual_value;\
 		throw ::test::assert_failed(error_message.str());\
 	}
 
@@ -88,10 +95,17 @@
 	}
 
 #define setup(fixture_type, fixture_label)\
-	::std::mutex assert_setup_mutex;\
-	fixture_type assert_setup_fixture;\
-	::test::test_context<::std::function<fixture_type()>> fixture_label(assert_setup_mutex, assert_setup_fixture);\
-	fixture_label = []()
+	ASSERT_LABEL_NOT_DEFINED(assert_setup_method, "cannot define multiple setups in a single test_suite");\
+	ASSERT_LABEL_DEFINED(assert_test_case_block, "cannot declare setup outside test_suite");\
+	::std::shared_ptr<::std::function<void()>> assert_teardown_method(new ::std::function<void()>);\
+	::std::shared_ptr<::std::function<fixture_type()>> assert_setup_method(new ::std::function<fixture_type()>);\
+	::test::fixture<::std::function<fixture_type()>> fixture_label(assert_setup_method, assert_teardown_method);\
+	*assert_setup_method = []()
+
+#define teardown ;\
+	ASSERT_LABEL_DEFINED(assert_setup_method, "cannot declare teardown without a setup");\
+	*assert_teardown_method = [=]() mutable
+
 
 namespace test {
 
@@ -133,6 +147,9 @@ namespace test {
 
 	// dummy for checking begin_tests scope
 	void assert_test_suite_block(void);
+
+	//dummy for checking setup redeclaration
+	void assert_setup_method(void);
 
 }
 

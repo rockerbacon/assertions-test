@@ -3,45 +3,40 @@
 #include <mutex>
 #include <type_traits>
 #include <functional>
+#include <memory>
 
 namespace test {
 
 	template<typename function_type>
-	class test_context {
+	class fixture {
+		template<typename T>
+		friend fixture<T> std::copy(const fixture<T>&);
 		public:
 			typedef decltype(std::declval<function_type>()()) fixture_type;
 		private:
-			std::mutex& mutex;
+			std::shared_ptr<std::mutex> mutex;
 			mutable bool initialized;
-			function_type setup;
-			std::function<void(fixture_type&)> teardown;
-			fixture_type &fixture_singleton;
+			std::shared_ptr<function_type> setup;
+			std::shared_ptr<std::function<void()>> teardown;
+			mutable std::shared_ptr<fixture_type> fixture_singleton;
 
 		public:
-			test_context(std::mutex& mutex, fixture_type& fixture_singleton)
-				:	mutex(mutex),
+			fixture(decltype(setup) setup, decltype(teardown) teardown)
+				:	mutex(new std::mutex),
 					initialized(false),
-					fixture_singleton(fixture_singleton)
+					setup(setup),
+					teardown(teardown)
 			{}
 
-			test_context& operator=(const function_type &function) {
-				this->setup = function;
-				return *this;
-			}
-
-			fixture_type mutable_fixture() const {
-				return this->setup();
-			}
-
-			operator const fixture_type& () const {
+			operator fixture_type () const {
 				if (!this->initialized) {
-					std::lock_guard<std::mutex> lock(this->mutex);
+					std::lock_guard<std::mutex> lock(*this->mutex);
 					if (!this->initialized) {
-						this->fixture_singleton = this->setup();
+						this->fixture_singleton = std::make_shared<fixture_type>((*this->setup)());
 						this->initialized = true;
 					}
 				}
-				return this->fixture_singleton;
+				return *this->fixture_singleton;
 			}
 	};
 
@@ -49,8 +44,9 @@ namespace test {
 
 namespace std {
 	template<typename function_type>
-	typename test::test_context<function_type>::fixture_type copy(const test::test_context<function_type>& context) {
-		return context.mutable_fixture();
+	typename test::fixture<function_type> copy(const test::fixture<function_type>& original) {
+		test::fixture<function_type> copy(original.setup, original.teardown);
+		return copy;
 	}
 }
 
