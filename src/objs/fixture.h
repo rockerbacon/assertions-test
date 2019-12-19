@@ -20,20 +20,22 @@ namespace test {
 
 		public:
 			fixture() = default;
-			fixture(decltype(setup) setup, decltype(teardown) teardown)
+			fixture(decltype(setup) setup)
 				:	mutex(new std::mutex),
 					initialized(false),
 					setup(setup),
-					teardown(teardown)
+					teardown([]{})
 			{}
 
 			fixture(const fixture& other)
-				:	fixture(other.setup, other.teardown)
-			{}
+				:	fixture(other.setup)
+			{
+				this->set_teardown(other.teardown);
+			}
 
 			~fixture() {
 				if (this->initialized) {
-					//this->teardown();
+					this->teardown();
 				}
 			}
 
@@ -46,6 +48,10 @@ namespace test {
 					}
 				}
 				return *this->fixture_singleton;
+			}
+
+			void set_teardown(decltype(teardown) teardown) {
+				this->teardown = teardown;
 			}
 	};
 

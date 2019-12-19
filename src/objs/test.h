@@ -100,10 +100,11 @@
 	::std::function<void()> assert_teardown_method;\
 	::std::function<fixture_type()> assert_setup_method;\
 	::test::fixture<::std::function<fixture_type()>> fixture_label;\
+	decltype(fixture_label)& assert_fixture = fixture_label;\
 	goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_SETUP_BLOCK);\
 	while(true)\
 		if (true) {\
-			fixture_label = ::test::fixture<::std::function<fixture_type()>>(assert_setup_method, assert_teardown_method);\
+			assert_fixture = ::test::fixture<::std::function<fixture_type()>>(assert_setup_method);\
 			break;\
 		} else\
 			ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_SETUP_BLOCK):\
@@ -111,7 +112,14 @@
 
 #define teardown ;\
 	ASSERT_LABEL_DEFINED(assert_setup_method, "cannot declare teardown without a setup");\
-	assert_teardown_method = [=]()
+	goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEARDOWN_BLOCK);\
+	while(true)\
+		if(true) {\
+			assert_fixture.set_teardown(assert_teardown_method);\
+			break;\
+		} else\
+			ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEARDOWN_BLOCK):\
+				assert_teardown_method = [=]()
 
 
 namespace test {
