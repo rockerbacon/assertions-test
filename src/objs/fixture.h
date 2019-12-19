@@ -9,18 +9,17 @@ namespace test {
 
 	template<typename function_type>
 	class fixture {
-		template<typename T>
-		friend fixture<T> std::copy(const fixture<T>&);
 		public:
 			typedef decltype(std::declval<function_type>()()) fixture_type;
 		private:
 			std::shared_ptr<std::mutex> mutex;
 			mutable bool initialized;
-			std::shared_ptr<function_type> setup;
-			std::shared_ptr<std::function<void()>> teardown;
+			function_type setup;
+			std::function<void()> teardown;
 			mutable std::shared_ptr<fixture_type> fixture_singleton;
 
 		public:
+			fixture() = default;
 			fixture(decltype(setup) setup, decltype(teardown) teardown)
 				:	mutex(new std::mutex),
 					initialized(false),
@@ -28,11 +27,21 @@ namespace test {
 					teardown(teardown)
 			{}
 
+			fixture(const fixture& other)
+				:	fixture(other.setup, other.teardown)
+			{}
+
+			~fixture() {
+				if (this->initialized) {
+					//this->teardown();
+				}
+			}
+
 			operator fixture_type () const {
 				if (!this->initialized) {
 					std::lock_guard<std::mutex> lock(*this->mutex);
 					if (!this->initialized) {
-						this->fixture_singleton = std::make_shared<fixture_type>((*this->setup)());
+						this->fixture_singleton = std::make_shared<fixture_type>(this->setup());
 						this->initialized = true;
 					}
 				}
@@ -45,9 +54,7 @@ namespace test {
 namespace std {
 	template<typename function_type>
 	typename test::fixture<function_type> copy(const test::fixture<function_type>& original) {
-		test::fixture<function_type> copy(original.setup, original.teardown);
-		return copy;
+		return test::fixture<function_type>(original);
 	}
 }
-
 

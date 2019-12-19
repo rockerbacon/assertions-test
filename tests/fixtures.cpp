@@ -14,9 +14,6 @@ begin_tests {
 			const int* fixtureB = my_int_fixture;
 
 			assert(fixtureA, ==, fixtureB);
-
-			assert(*fixtureA, ==, 10);
-			assert(*fixtureB, ==, 10);
 		};
 
 		test_case("fixtures can be copied") {

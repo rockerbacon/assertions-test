@@ -97,14 +97,21 @@
 #define setup(fixture_type, fixture_label)\
 	ASSERT_LABEL_NOT_DEFINED(assert_setup_method, "cannot define multiple setups in a single test_suite");\
 	ASSERT_LABEL_DEFINED(assert_test_case_block, "cannot declare setup outside test_suite");\
-	::std::shared_ptr<::std::function<void()>> assert_teardown_method(new ::std::function<void()>);\
-	::std::shared_ptr<::std::function<fixture_type()>> assert_setup_method(new ::std::function<fixture_type()>);\
-	::test::fixture<::std::function<fixture_type()>> fixture_label(assert_setup_method, assert_teardown_method);\
-	*assert_setup_method = []()
+	::std::function<void()> assert_teardown_method;\
+	::std::function<fixture_type()> assert_setup_method;\
+	::test::fixture<::std::function<fixture_type()>> fixture_label;\
+	goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_SETUP_BLOCK);\
+	while(true)\
+		if (true) {\
+			fixture_label = ::test::fixture<::std::function<fixture_type()>>(assert_setup_method, assert_teardown_method);\
+			break;\
+		} else\
+			ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_SETUP_BLOCK):\
+				assert_setup_method = []()
 
 #define teardown ;\
 	ASSERT_LABEL_DEFINED(assert_setup_method, "cannot declare teardown without a setup");\
-	*assert_teardown_method = [=]()
+	assert_teardown_method = [=]()
 
 
 namespace test {
