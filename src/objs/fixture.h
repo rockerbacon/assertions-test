@@ -7,15 +7,16 @@
 
 namespace test {
 
-	template<typename function_type>
+	template<typename setup_function>
 	class fixture {
 		public:
-			typedef decltype(std::declval<function_type>()()) fixture_type;
+			typedef decltype(std::declval<setup_function>()()) fixture_type;
+			typedef std::function<void(fixture_type&)> teardown_function;
 		private:
 			std::shared_ptr<std::mutex> mutex;
 			mutable bool initialized;
-			function_type setup;
-			std::function<void()> teardown;
+			setup_function setup;
+			teardown_function teardown;
 			mutable std::shared_ptr<fixture_type> fixture_singleton;
 
 		public:
@@ -24,7 +25,7 @@ namespace test {
 				:	mutex(new std::mutex),
 					initialized(false),
 					setup(setup),
-					teardown([]{})
+					teardown([](fixture_type&){})
 			{}
 
 			fixture(const fixture& other)
@@ -34,8 +35,8 @@ namespace test {
 			}
 
 			~fixture() {
-				if (this->initialized) {
-					this->teardown();
+				if (this->initialized && this->fixture_singleton.use_count() == 1) {
+					this->teardown(*this->fixture_singleton);
 				}
 			}
 

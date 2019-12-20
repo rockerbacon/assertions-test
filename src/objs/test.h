@@ -97,10 +97,9 @@
 #define setup(fixture_type, fixture_label)\
 	ASSERT_LABEL_NOT_DEFINED(assert_setup_method, "cannot define multiple setups in a single test_suite");\
 	ASSERT_LABEL_DEFINED(assert_test_case_block, "cannot declare setup outside test_suite");\
-	::std::function<void()> assert_teardown_method;\
 	::std::function<fixture_type()> assert_setup_method;\
-	::test::fixture<::std::function<fixture_type()>> fixture_label;\
-	decltype(fixture_label)& assert_fixture = fixture_label;\
+	::test::fixture<::std::function<fixture_type()>> assert_fixture;\
+	auto& fixture_label = assert_fixture;\
 	goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_SETUP_BLOCK);\
 	while(true)\
 		if (true) {\
@@ -110,8 +109,10 @@
 			ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_SETUP_BLOCK):\
 				assert_setup_method = []()
 
-#define teardown ;\
+#define teardown(fixture_label) ;\
+	ASSERT_LABEL_NOT_DEFINED(assert_teardown_method, "cannot define multiple teardowns in a single test_suite");\
 	ASSERT_LABEL_DEFINED(assert_setup_method, "cannot declare teardown without a setup");\
+	decltype(assert_fixture)::teardown_function assert_teardown_method;\
 	goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEARDOWN_BLOCK);\
 	while(true)\
 		if(true) {\
@@ -119,7 +120,7 @@
 			break;\
 		} else\
 			ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEARDOWN_BLOCK):\
-				assert_teardown_method = [=]()
+				assert_teardown_method = [](decltype(assert_fixture)::fixture_type& fixture_label)
 
 
 namespace test {
@@ -165,6 +166,9 @@ namespace test {
 
 	//dummy for checking setup redeclaration
 	void assert_setup_method(void);
+
+	//dummy for checking teardown declaration
+	void assert_teardown_method(void);
 
 }
 
