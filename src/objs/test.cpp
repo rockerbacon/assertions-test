@@ -1,4 +1,5 @@
 #include "test.h"
+#include <stopwatch/stopwatch.h>
 #include <unordered_map>
 #include "low_level_error_handler.h"
 #include <csetjmp>
@@ -28,6 +29,8 @@ const char* assert_failed::what(void) const noexcept {
 
 void test::queue_test_for_execution (const string &test_case_description, unsigned row_in_terminal, const test_case& test) {
 	test::test_execution_queue.push_back([=]() {
+		stopwatch stopwatch;
+		chrono::high_resolution_clock::duration test_duration;
 		jmp_buf jump_buffer;
 		string low_level_error_message;
 
@@ -39,17 +42,19 @@ void test::queue_test_for_execution (const string &test_case_description, unsign
 		try {
 			if (!setjmp(jump_buffer)) {
 				test();
+				test_duration = stopwatch.total_time();
 				(**test::successful_tests_count)++;
 				for (auto& observer : test::observers) {
-					(**observer)->test_case_succeeded(test_case_description, row_in_terminal, 0s);
+					(**observer)->test_case_succeeded(test_case_description, row_in_terminal, test_duration);
 				}
 			} else {
 				throw assert_failed(low_level_error_message);
 			}
 		} catch (const exception &e) {
+			test_duration = stopwatch.total_time();
 			(**test::failed_tests_count)++;
 			for (auto& observer : test::observers) {
-				(**observer)->test_case_failed(test_case_description, row_in_terminal, 0s, e.what());
+				(**observer)->test_case_failed(test_case_description, row_in_terminal, test_duration, e.what());
 			}
 		}
 	});
