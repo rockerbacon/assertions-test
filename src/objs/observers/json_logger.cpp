@@ -1,7 +1,6 @@
 #include "json_logger.h"
 
 #include <ostream>
-#include <stopwatch/stopwatch.h>
 
 using namespace test;
 using namespace std;
@@ -66,7 +65,7 @@ void json_logger::test_case_failed (const string &test_case_description, unsigne
 			<< '{'
 				<< "\"description\":\"" << test_case_description << "\","
 				<< "\"row\":" << row << ','
-				<< "\"duration\":\"" << test_duration << "\","
+				<< "\"duration\":\"" << test_duration.count() << "\","
 				<< "\"failure_reason\":\"" << reason << '\"'
 			<< '}'
 		<< '}' << endl;
@@ -80,7 +79,7 @@ void json_logger::test_case_succeeded (const string& test_case_description, unsi
 			<< '{'
 				<< "\"description\":\"" << test_case_description << "\","
 				<< "\"row\":" << row << ','
-				<< "\"duration\":\"" << test_duration << '\"'
+				<< "\"duration\":\"" << test_duration.count() << '\"'
 			<< '}'
 		<< '}' << endl;
 }

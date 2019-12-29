@@ -1,7 +1,6 @@
 #include "live_terminal.h"
 #include "../terminal/manipulators.h"
 #include <iostream>
-#include <stopwatch/stopwatch.h>
 #include "../utils/warnings.h"
 
 using namespace std;
@@ -80,7 +79,7 @@ void live_terminal::test_case_failed (const std::string& test_case_description, 
 			<< style<bright<color::RED>()>
 				<< icon::CIRCLE << "  " << test_case_description
 				<< ": " << reason
-				<< " (" << test_duration << ")"
+				<< " (" << test_duration.count() << ")"
 		<< '\n';
 }
 
@@ -91,7 +90,7 @@ void live_terminal::test_case_succeeded (const string& test_case_description, un
 
 			<< style< bright<color::GREEN>() >
 				<< icon::CIRCLE << "  " << test_case_description
-				<< " (" << test_duration << ")"
+				<< " (" << test_duration.count() << ")"
 		<< '\n';
 }
 
