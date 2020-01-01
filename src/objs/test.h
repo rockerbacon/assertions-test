@@ -91,10 +91,10 @@
 		}\
 		for (auto& observer : ::test::observers) {\
 			auto observer_access = *observer;\
-			(*observer_access)->tests_ended(**::test::successful_tests_count, **::test::failed_tests_count);\
+			(*observer_access)->tests_ended(::test::successful_tests_count, ::test::failed_tests_count);\
 			delete *observer_access;\
 		}\
-		return **::test::failed_tests_count;\
+		return ::test::failed_tests_count;\
 	}
 
 #define setup(fixture_type, fixture_label)\
@@ -132,8 +132,8 @@ namespace test {
 
 	extern unsigned elements_discovered;
 
-	extern parallel::atomic<unsigned> successful_tests_count;
-	extern parallel::atomic<unsigned> failed_tests_count;
+	extern std::atomic<unsigned> successful_tests_count;
+	extern std::atomic<unsigned> failed_tests_count;
 
 	extern parallel_tools::thread_pool tests_pool;
 	extern std::list<std::future<void>> tests_futures;

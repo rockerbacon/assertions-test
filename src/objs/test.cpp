@@ -14,8 +14,8 @@ list<parallel::atomic<observer*>> test::observers;
 
 unsigned test::elements_discovered = 0;
 
-parallel::atomic<unsigned> test::successful_tests_count(0);
-parallel::atomic<unsigned> test::failed_tests_count(0);
+std::atomic<unsigned> test::successful_tests_count(0);
+std::atomic<unsigned> test::failed_tests_count(0);
 
 parallel_tools::thread_pool test::tests_pool(thread::hardware_concurrency());
 std::list<std::future<void>> test::tests_futures;
@@ -44,7 +44,7 @@ void test::queue_test_for_execution (const string &test_case_description, unsign
 			if (!setjmp(jump_buffer)) {
 				test();
 				test_duration = stopwatch.total_time();
-				(**test::successful_tests_count)++;
+				test::successful_tests_count++;
 				for (auto& observer : test::observers) {
 					(**observer)->test_case_succeeded(test_case_description, row_in_terminal, test_duration);
 				}
@@ -53,7 +53,7 @@ void test::queue_test_for_execution (const string &test_case_description, unsign
 			}
 		} catch (const exception &e) {
 			test_duration = stopwatch.total_time();
-			(**test::failed_tests_count)++;
+			test::failed_tests_count++;
 			for (auto& observer : test::observers) {
 				(**observer)->test_case_failed(test_case_description, row_in_terminal, test_duration, e.what());
 			}
