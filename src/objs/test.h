@@ -6,10 +6,11 @@
 #include <thread>
 #include <sstream>
 #include <iostream>
+#include <parallel-tools/thread_pool.h>
+
 #include "observers/live_terminal.h"
 #include "observers/json_logger.h"
 #include "parallel/atomic.h"
-#include "parallel/execution_queue.h"
 #include "utils/warnings.h"
 #include "fixture.h"
 
@@ -85,7 +86,9 @@
 		}\
 
 #define end_tests\
-		::test::test_execution_queue.join_unfinished_executions();\
+		for (auto& future : ::test::tests_futures) {\
+			future.wait();\
+		}\
 		for (auto& observer : ::test::observers) {\
 			auto observer_access = *observer;\
 			(*observer_access)->tests_ended(**::test::successful_tests_count, **::test::failed_tests_count);\
@@ -132,7 +135,8 @@ namespace test {
 	extern parallel::atomic<unsigned> successful_tests_count;
 	extern parallel::atomic<unsigned> failed_tests_count;
 
-	extern parallel::execution_queue test_execution_queue;
+	extern parallel_tools::thread_pool tests_pool;
+	extern std::list<std::future<void>> tests_futures;
 
 	typedef std::function<void(void)> test_case;
 
