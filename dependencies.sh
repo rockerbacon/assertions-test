@@ -5,11 +5,13 @@ DEPENDENCIES_DIR="$PROJECT_ROOT/external_dependencies"
 DEPENDENCIES_LIB_DIR="$DEPENDENCIES_DIR/lib"
 DEPENDENCIES_INCLUDE_DIR="$DEPENDENCIES_DIR/include"
 DEPENDENCIES_OBJS_DIR="$DEPENDENCIES_DIR/objs"
+DEPENDENCIES_LOCAL_OBJS_DIR="$DEPENDENCIES_DIR/dev_objs"
 DEPENDENCY_MANAGER_DIR="$PROJECT_ROOT/.assertions/dependency_manager"
 
 mkdir -p "$DEPENDENCIES_LIB_DIR"
 mkdir -p "$DEPENDENCIES_INCLUDE_DIR"
 mkdir -p "$DEPENDENCIES_OBJS_DIR"
+mkdir -p "$DEPENDENCIES_LOCAL_OBJS_DIR"
 
 ############### Command Line Interface ##################
 print_help () {
@@ -22,7 +24,7 @@ print_help () {
 	echo "	add: add new dependency to the project. Use './dependencies.sh add --help' for more information"
 	echo "	remove: remove dependency from the project. Use './dependencies.sh remove --help' for more information"
 	echo "	clean: delete all downloaded dependencies (everything inside ./external_dependencies)"
-	echo "	install: download and configure all dependencies"
+	echo "	install: download and configure all dependencies. Use '--ignore-local-dependencies' to not install dependencies marked as local-only"
 	echo "	list: list all project's dependencies"
 }
 
@@ -41,10 +43,11 @@ if [ "$1" == "--help" ]; then
 elif [ "$1" == "add" ]; then
 	shift
 	source "$PROJECT_ROOT/.assertions/dependency_manager/add.sh"
-	touch "$DEPENDENCY_MANAGER_DIR"
+	touch "$DEPENDENCIES_DIR"
 elif [ "$1" == "remove" ]; then
 	shift
 	source "$PROJECT_ROOT/.assertions/dependency_manager/remove.sh"
+	touch "$DEPENDENCIES_DIR"
 elif [ "$1" == "clean" ]; then
 	echo "Are you sure you want to delete all downloaded dependencies? (y/n)"
 	read CONFIRMATION
@@ -66,9 +69,12 @@ elif [ "$1" == "install" ]; then
 	if [ $DEPENDENCY_LIST_IS_EMPTY ]; then
 		echo "Info: project has no external dependencies"
 	else
+		if [ "$2" == "--ignore-local-dependencies" ]; then
+			export IGNORE_LOCAL_DEPENDENCIES=true
+		fi
 		cd "$DEPENDENCY_MANAGER_DIR/modules"
 		source "$DEPENDENCY_MANAGER_DIR/install.sh"
-		touch "$DEPENDENCY_MANAGER_DIR"
+		touch "$DEPENDENCIES_DIR"
 	fi
 else
 	echo "Error: unknown action '$1'"
