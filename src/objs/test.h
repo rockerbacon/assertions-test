@@ -5,25 +5,32 @@
 #include <list>
 #include <thread>
 #include <sstream>
+#include <iostream>
 #include "observers/live_terminal.h"
 #include "observers/json_logger.h"
 #include "parallel/atomic.h"
 #include "parallel/execution_queue.h"
 #include "utils/warnings.h"
-#include <iostream>
+#include "fixture.h"
 
 #define ASSERT_GENERATE_LABEL_PASTE_EXPAND(labelid, line) labelid ## _ ## line
 #define ASSERT_GENERATE_LABEL_PASTE(labelid, line) ASSERT_GENERATE_LABEL_PASTE_EXPAND(labelid, line)
 #define ASSERT_GENERATE_LABEL(labelid) ASSERT_GENERATE_LABEL_PASTE(labelid, __LINE__)
 
-#define ASSERT_LABEL_NOT_DEFINED(label, error_message)\
+#define ASSERT_LABEL_DEFINED(label, error_message)\
 	{\
 		using namespace test;\
 		static_assert(!::std::is_same<decltype(label), decltype(::test::label)>(), error_message);\
 	}
 
+#define ASSERT_LABEL_NOT_DEFINED(label, error_message)\
+	{\
+		using namespace test;\
+		static_assert(::std::is_same<decltype(label), decltype(::test::label)>(), error_message);\
+	}
+
 #define test_suite(test_suite_description)\
-	ASSERT_LABEL_NOT_DEFINED(assert_test_suite_block, "cannot declare test_suite outside begin_tests");\
+	ASSERT_LABEL_DEFINED(assert_test_suite_block, "cannot declare test_suite outside begin_tests");\
 	for (auto& observer : ::test::observers) {\
 		(**observer)->test_suite_block_begun(test_suite_description);\
 	}\
@@ -45,7 +52,7 @@
 						ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_SUITE_BLOCK):
 
 #define test_case(test_case_description)\
-	ASSERT_LABEL_NOT_DEFINED(assert_test_case_block, "cannot declare test_case outside test_suite");\
+	ASSERT_LABEL_DEFINED(assert_test_case_block, "cannot declare test_case outside test_suite");\
 	goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_CASE_BLOCK);\
 	while(true)\
 		if (true) {\
@@ -57,13 +64,14 @@
 			break;\
 		} else\
 			ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_CASE_BLOCK):\
-				assert_test_case_block = []()
+				assert_test_case_block = [=]()
 
 #define assert(actual_value, comparison_operator, expected_value)\
 	::test::is_logic_operator([=]{ return #comparison_operator; });\
 	if (!((actual_value) comparison_operator (expected_value))) {\
 		::std::stringstream error_message;\
-		error_message << "expected " << #actual_value << ' ' << #comparison_operator << ' ' << #expected_value;\
+		error_message << "expected " << #actual_value << ' ' << #comparison_operator << ' ' << expected_value;\
+		error_message << " but got " << actual_value;\
 		throw ::test::assert_failed(error_message.str());\
 	}
 
@@ -85,6 +93,35 @@
 		}\
 		return **::test::failed_tests_count;\
 	}
+
+#define setup(fixture_type, fixture_label)\
+	ASSERT_LABEL_NOT_DEFINED(assert_setup_method, "cannot define multiple setups in a single test_suite");\
+	ASSERT_LABEL_DEFINED(assert_test_case_block, "cannot declare setup outside test_suite");\
+	::std::function<fixture_type()> assert_setup_method;\
+	::test::fixture<::std::function<fixture_type()>> assert_fixture;\
+	auto& fixture_label = assert_fixture;\
+	goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_SETUP_BLOCK);\
+	while(true)\
+		if (true) {\
+			assert_fixture = ::test::fixture<::std::function<fixture_type()>>(assert_setup_method);\
+			break;\
+		} else\
+			ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_SETUP_BLOCK):\
+				assert_setup_method = []()
+
+#define teardown(fixture_label) ;\
+	ASSERT_LABEL_NOT_DEFINED(assert_teardown_method, "cannot define multiple teardowns in a single test_suite");\
+	ASSERT_LABEL_DEFINED(assert_setup_method, "cannot declare teardown without a setup");\
+	decltype(assert_fixture)::teardown_function assert_teardown_method;\
+	goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEARDOWN_BLOCK);\
+	while(true)\
+		if(true) {\
+			assert_fixture.set_teardown(assert_teardown_method);\
+			break;\
+		} else\
+			ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEARDOWN_BLOCK):\
+				assert_teardown_method = [](decltype(assert_fixture)::fixture_type& fixture_label)
+
 
 namespace test {
 
@@ -126,6 +163,12 @@ namespace test {
 
 	// dummy for checking begin_tests scope
 	void assert_test_suite_block(void);
+
+	//dummy for checking setup redeclaration
+	void assert_setup_method(void);
+
+	//dummy for checking teardown declaration
+	void assert_teardown_method(void);
 
 }
 
