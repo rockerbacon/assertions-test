@@ -19,27 +19,33 @@ namespace parallel {
 			T& operator* (void) {
 				return this->object;
 			}
+
+			operator T& () {
+				return this->object;
+			}
+
+			T& operator-> () {
+				return this->object;
+			}
 	};
 
 	template<typename T>
 	class atomic {
 		private:
-			std::unique_ptr<std::mutex> sync_mutex;
+			std::mutex sync_mutex;
 			T object;
 
 		public:
-			atomic(void)
-				:	sync_mutex(new std::mutex),
-					object()
-			{}
-
-			atomic(T object)
-				:	sync_mutex(new std::mutex),
-				   	object(object)
+			atomic(T object) :
+				object(object)
 			{}
 
 			atomic_access<T> operator* (void) {
-				return atomic_access<T>(this->object, *this->sync_mutex);
+				return atomic_access<T>(this->object, this->sync_mutex);
+			}
+
+			atomic_access<T> operator-> () {
+				return atomic_access<T>(this->object, this->sync_mutex);
 			}
 	};
 

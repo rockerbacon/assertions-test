@@ -38,7 +38,7 @@ void test::queue_test_for_execution (const string &test_case_description, unsign
 		test::setup_signal_handlers(&low_level_error_message, &jump_buffer);
 
 		for (auto& observer : test::observers) {
-			(**observer)->test_case_execution_begun(test_case_description, row_in_terminal);
+			observer->test_case_execution_begun(test_case_description, row_in_terminal);
 		}
 		try {
 			if (!setjmp(jump_buffer)) {
@@ -46,7 +46,7 @@ void test::queue_test_for_execution (const string &test_case_description, unsign
 				test_duration = stopwatch.total_time();
 				test::successful_tests_count++;
 				for (auto& observer : test::observers) {
-					(**observer)->test_case_succeeded(test_case_description, row_in_terminal, test_duration);
+					observer->test_case_succeeded(test_case_description, row_in_terminal, test_duration);
 				}
 			} else {
 				throw assert_failed(low_level_error_message);
@@ -55,7 +55,7 @@ void test::queue_test_for_execution (const string &test_case_description, unsign
 			test_duration = stopwatch.total_time();
 			test::failed_tests_count++;
 			for (auto& observer : test::observers) {
-				(**observer)->test_case_failed(test_case_description, row_in_terminal, test_duration, e.what());
+				observer->test_case_failed(test_case_description, row_in_terminal, test_duration, e.what());
 			}
 		}
 	});

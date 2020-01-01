@@ -33,13 +33,13 @@
 #define test_suite(test_suite_description)\
 	ASSERT_LABEL_DEFINED(assert_test_suite_block, "cannot declare test_suite outside begin_tests");\
 	for (auto& observer : ::test::observers) {\
-		(**observer)->test_suite_block_begun(test_suite_description);\
+		observer->test_suite_block_begun(test_suite_description);\
 	}\
 	::test::elements_discovered++;\
 	if(false) {\
 		ASSERT_GENERATE_LABEL(ASSERT_LABEL_END_TEST_SUITE_BLOCK):;\
 			for (auto& observer : ::test::observers) {\
-				(**observer)->test_suite_block_ended();\
+				observer->test_suite_block_ended();\
 			}\
 	} else\
 		for (::test::test_case assert_test_case_block;;)\
@@ -58,7 +58,7 @@
 	while(true)\
 		if (true) {\
 			for (auto& observer : ::test::observers) {\
-				(**observer)->test_case_discovered(test_case_description);\
+				observer->test_case_discovered(test_case_description);\
 			}\
 			::test::queue_test_for_execution(test_case_description, ::test::elements_discovered, assert_test_case_block);\
 			::test::elements_discovered++;\
@@ -82,7 +82,7 @@
 		::test::observers.emplace_back(new ::test::live_terminal);\
 		::test::observers.emplace_back(new ::test::json_logger(::std::cerr));\
 		for (auto& observer : ::test::observers) {\
-			(**observer)->tests_begun();\
+			observer->tests_begun();\
 		}\
 
 #define end_tests\
@@ -91,7 +91,7 @@
 		}\
 		for (auto& observer : ::test::observers) {\
 			auto observer_access = *observer;\
-			(*observer_access)->tests_ended(::test::successful_tests_count, ::test::failed_tests_count);\
+			observer_access->tests_ended(::test::successful_tests_count, ::test::failed_tests_count);\
 			delete *observer_access;\
 		}\
 		return ::test::failed_tests_count;\
