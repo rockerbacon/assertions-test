@@ -61,6 +61,7 @@
 			ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_CASE_BLOCK):\
 				assert_test_case_block = [=]()
 
+// TODO probably doesn't need to be a macro
 #define assert(actual_value, comparison_operator, expected_value)\
 	::test::is_logic_operator([=]{ return #comparison_operator; });\
 	if (!((actual_value) comparison_operator (expected_value))) {\
@@ -78,9 +79,7 @@
 		::test::notify_tests_begun();
 
 #define end_tests\
-		for (auto& future : ::test::tests_futures) {\
-			future.wait();\
-		}\
+		::test::wait_tests();\
 		::test::notify_tests_ended(::test::successful_tests_count, ::test::failed_tests_count);\
 		return ::test::failed_tests_count;\
 	}
@@ -167,6 +166,8 @@ namespace test {
 		std::chrono::high_resolution_clock::duration test_duration
 	);
 	void notify_tests_ended (unsigned successful_tests, unsigned failed_tests);
+
+	void wait_tests();
 
 	// dummy for checking test_suite scope
 	void assert_test_case_block(void);

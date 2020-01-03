@@ -127,3 +127,9 @@ void test::notify_tests_ended(unsigned successful_tests, unsigned failed_tests) 
 	}
 }
 
+void test::wait_tests() {
+	for (auto& future : tests_futures) {
+		future.wait();
+	}
+}
+
