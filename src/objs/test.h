@@ -34,19 +34,17 @@
 	ASSERT_LABEL_DEFINED(assert_test_suite_block, "cannot declare test_suite outside begin_tests");\
 	::test::notify_test_suite_block_begun(test_suite_description);\
 	::test::elements_discovered++;\
-	if(false) {\
-		ASSERT_GENERATE_LABEL(ASSERT_LABEL_END_TEST_SUITE_BLOCK):;\
-			::test::notify_test_suite_block_ended();\
-	} else\
-		for (::test::test_case assert_test_case_block;;)\
-			if (true)\
-				goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_SUITE_BLOCK);\
-			else\
-				while(true)\
-					if (true) {\
-						goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_END_TEST_SUITE_BLOCK);\
-					} else\
-						ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_SUITE_BLOCK):
+	bool ASSERT_GENERATE_LABEL(assert_test_suite_running) = true;\
+	for (::test::test_case assert_test_case_block; ASSERT_GENERATE_LABEL(assert_test_suite_running);)\
+		if (true)\
+			goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_SUITE_BLOCK);\
+		else\
+			while(ASSERT_GENERATE_LABEL(assert_test_suite_running))\
+				if (true) {\
+					::test::notify_test_suite_block_ended();\
+					ASSERT_GENERATE_LABEL(assert_test_suite_running) = false;\
+				} else\
+					ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_SUITE_BLOCK):
 
 #define test_case(test_case_description)\
 	ASSERT_LABEL_DEFINED(assert_test_case_block, "cannot declare test_case outside test_suite");\
@@ -61,7 +59,6 @@
 			ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_CASE_BLOCK):\
 				assert_test_case_block = [=]()
 
-// TODO probably doesn't need to be a macro
 #define assert(actual_value, comparison_operator, expected_value)\
 	::test::is_logic_operator([=]{ return #comparison_operator; });\
 	if (!((actual_value) comparison_operator (expected_value))) {\
