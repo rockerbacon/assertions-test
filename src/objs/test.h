@@ -11,7 +11,6 @@
 
 #include "observers/live_terminal.h"
 #include "observers/json_logger.h"
-#include "utils/warnings.h"
 #include "fixture.h"
 
 #define ASSERT_GENERATE_LABEL_PASTE_EXPAND(labelid, line) labelid ## _ ## line
@@ -32,40 +31,26 @@
 
 #define test_suite(test_suite_description)\
 	ASSERT_LABEL_DEFINED(assert_test_suite_block, "cannot declare test_suite outside begin_tests");\
-	for (auto& observer : ::test::observers) {\
-		observer.access([&](auto& observer) {\
-			observer->test_suite_block_begun(test_suite_description);\
-		});\
-	}\
+	::test::notify_test_suite_block_begun(test_suite_description);\
 	::test::elements_discovered++;\
-	if(false) {\
-		ASSERT_GENERATE_LABEL(ASSERT_LABEL_END_TEST_SUITE_BLOCK):;\
-			for (auto& observer : ::test::observers) {\
-				observer.access([&](auto& observer) {\
-					observer->test_suite_block_ended();\
-				});\
-			}\
-	} else\
-		for (::test::test_case assert_test_case_block;;)\
-			if (true)\
-				goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_SUITE_BLOCK);\
-			else\
-				while(true)\
-					if (true) {\
-						goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_END_TEST_SUITE_BLOCK);\
-					} else\
-						ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_SUITE_BLOCK):
+	bool ASSERT_GENERATE_LABEL(assert_test_suite_running) = true;\
+	for (::test::test_case assert_test_case_block; ASSERT_GENERATE_LABEL(assert_test_suite_running);)\
+		if (true)\
+			goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_SUITE_BLOCK);\
+		else\
+			while(ASSERT_GENERATE_LABEL(assert_test_suite_running))\
+				if (true) {\
+					::test::notify_test_suite_block_ended();\
+					ASSERT_GENERATE_LABEL(assert_test_suite_running) = false;\
+				} else\
+					ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_SUITE_BLOCK):
 
 #define test_case(test_case_description)\
 	ASSERT_LABEL_DEFINED(assert_test_case_block, "cannot declare test_case outside test_suite");\
 	goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_CASE_BLOCK);\
 	while(true)\
 		if (true) {\
-			for (auto& observer : ::test::observers) {\
-				observer.access([&](auto& observer) {\
-					observer->test_case_discovered(test_case_description);\
-				});\
-			}\
+			::test::notify_test_case_discovered(test_case_description);\
 			::test::queue_test_for_execution(test_case_description, ::test::elements_discovered, assert_test_case_block);\
 			::test::elements_discovered++;\
 			break;\
@@ -84,24 +69,14 @@
 
 #define begin_tests\
 	int main (void) {\
-		NO_UNUSED_WARNING int assert_test_suite_block;\
+		[[maybe_unused]] int assert_test_suite_block;\
 		::test::observers.emplace_back(new ::test::live_terminal);\
 		::test::observers.emplace_back(new ::test::json_logger(::std::cerr));\
-		for (auto& observer : ::test::observers) {\
-			observer.access([&](auto& observer) {\
-				observer->tests_begun();\
-			});\
-		}\
+		::test::notify_tests_begun();
 
 #define end_tests\
-		for (auto& future : ::test::tests_futures) {\
-			future.wait();\
-		}\
-		for (auto& observer : ::test::observers) {\
-			observer.access([&](auto& observer) {\
-				observer->tests_ended(::test::successful_tests_count, ::test::failed_tests_count);\
-			});\
-		}\
+		::test::wait_tests();\
+		::test::notify_tests_ended(::test::successful_tests_count, ::test::failed_tests_count);\
 		return ::test::failed_tests_count;\
 	}
 
@@ -169,6 +144,26 @@ namespace test {
 	}
 
 	void queue_test_for_execution (const std::string &test_case_description, unsigned row_in_terminal, const test_case& test);
+
+	void notify_tests_begun();
+	void notify_test_suite_block_begun(const std::string& test_suite_description);
+	void notify_test_case_discovered(const std::string& test_case_description);
+	void notify_test_suite_block_ended();
+	void notify_test_case_execution_begun(const std::string& test_case_description, unsigned row);
+	void notify_test_case_failed(
+		const std::string& test_case_description,
+		unsigned row,
+		std::chrono::high_resolution_clock::duration test_duration,
+		const std::string& reason
+	);
+	void notify_test_case_succeeded(
+		const std::string& test_case_description,
+		unsigned row,
+		std::chrono::high_resolution_clock::duration test_duration
+	);
+	void notify_tests_ended (unsigned successful_tests, unsigned failed_tests);
+
+	void wait_tests();
 
 	// dummy for checking test_suite scope
 	void assert_test_case_block(void);
