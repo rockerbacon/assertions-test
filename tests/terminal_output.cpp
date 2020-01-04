@@ -3,7 +3,7 @@
 
 using namespace std;
 
-begin_tests {
+tests {
 
 	test_suite("4 test cases outputs") {
 		test_case("wait 500ms") {
@@ -57,4 +57,4 @@ begin_tests {
 		};
 	}
 
-} end_tests;
+}

@@ -1,7 +1,6 @@
 #include <test.h>
 
-begin_tests {
-
+tests {
 	test_suite("assert macros") {
 
 		test_case("assert equal succesfully") {
@@ -40,5 +39,5 @@ begin_tests {
 			assert(2, <, 4);
 		};
 	}
+}
 
-} end_tests;
