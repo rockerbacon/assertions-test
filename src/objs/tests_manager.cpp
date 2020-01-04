@@ -1,12 +1,11 @@
 #include "tests_manager.h"
 
 #include <iostream>
-#include <csetjmp>
 #include <stopwatch/stopwatch.h>
 
 #include "observers/json_logger.h"
 #include "observers/live_terminal.h"
-#include "low_level_error_handler.h"
+#include "signal_handler/signal_handler.h"
 #include "exceptions/assert_failed.h"
 
 using namespace test;
@@ -28,24 +27,18 @@ tests_manager::~tests_manager () {
 
 void tests_manager::queue_test_for_execution (const string &test_case_description, unsigned row_in_terminal, const function<void()>& test) {
 	auto test_future = tests_pool.exec([=]() {
-		jmp_buf jump_buffer;
 		string low_level_error_message;
 
-		// TODO signal handler not working properly
-		test::setup_signal_handlers(&low_level_error_message, &jump_buffer);
+		test::handle_signal(SIGSEGV);
 
 		notify_test_case_execution_begun(test_case_description, row_in_terminal);
 
 		chrono::high_resolution_clock::duration test_duration;
 		stopwatch stopwatch;
 		try {
-			if (!setjmp(jump_buffer)) {
-				test();
-				test_duration = stopwatch.total_time();
-				notify_test_case_succeeded(test_case_description, row_in_terminal, test_duration);
-			} else {
-				throw assert_failed(low_level_error_message);
-			}
+			test();
+			test_duration = stopwatch.total_time();
+			notify_test_case_succeeded(test_case_description, row_in_terminal, test_duration);
 		} catch (const exception &e) {
 			test_duration = stopwatch.total_time();
 			notify_test_case_failed(test_case_description, row_in_terminal, test_duration, e.what());
