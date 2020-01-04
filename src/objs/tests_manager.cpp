@@ -14,6 +14,9 @@ using namespace std;
 tests_manager::tests_manager () :
 	tests_pool(std::thread::hardware_concurrency())
 {
+	test::handle_signal(SIGSEGV);
+	test::handle_signal(SIGABRT);
+
 	observers.emplace_back(new live_terminal);
 	observers.emplace_back(new json_logger(cerr));
 	notify_tests_begun();
@@ -28,8 +31,6 @@ tests_manager::~tests_manager () {
 void tests_manager::queue_test_for_execution (const string &test_case_description, unsigned row_in_terminal, const function<void()>& test) {
 	auto test_future = tests_pool.exec([=]() {
 		string low_level_error_message;
-
-		test::handle_signal(SIGSEGV);
 
 		notify_test_case_execution_begun(test_case_description, row_in_terminal);
 
