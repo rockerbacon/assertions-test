@@ -11,7 +11,6 @@
 
 #include "observers/live_terminal.h"
 #include "observers/json_logger.h"
-#include "utils/warnings.h"
 #include "fixture.h"
 
 #define ASSERT_GENERATE_LABEL_PASTE_EXPAND(labelid, line) labelid ## _ ## line
