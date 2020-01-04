@@ -4,7 +4,8 @@
 
 using namespace std;
 using namespace chrono;
-begin_tests {
+
+tests {
 
 	test_suite("segmentation fault") {
 		test_case ("do something before low level error executes") {
@@ -23,4 +24,5 @@ begin_tests {
 		};
 	}
 
-} end_tests;
+}
+

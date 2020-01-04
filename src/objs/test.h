@@ -12,6 +12,8 @@
 #include "observers/live_terminal.h"
 #include "observers/json_logger.h"
 #include "fixture.h"
+#include "tests_manager.h"
+#include "exceptions/assert_failed.h"
 
 #define ASSERT_GENERATE_LABEL_PASTE_EXPAND(labelid, line) labelid ## _ ## line
 #define ASSERT_GENERATE_LABEL_PASTE(labelid, line) ASSERT_GENERATE_LABEL_PASTE_EXPAND(labelid, line)
@@ -29,18 +31,22 @@
 		static_assert(::std::is_same<decltype(label), decltype(::test::label)>(), error_message);\
 	}
 
+#define tests\
+	::test::tests_manager assert_tests_manager;\
+	int main ([[maybe_unused]] int assert_argc, [[maybe_unused]] char** assert_argv)
+
 #define test_suite(test_suite_description)\
-	ASSERT_LABEL_DEFINED(assert_test_suite_block, "cannot declare test_suite outside begin_tests");\
-	::test::notify_test_suite_block_begun(test_suite_description);\
+	ASSERT_LABEL_DEFINED(assert_argc, "cannot declare test_suite outside begin_tests");\
+	assert_tests_manager.notify_test_suite_block_begun(test_suite_description);\
 	::test::elements_discovered++;\
 	bool ASSERT_GENERATE_LABEL(assert_test_suite_running) = true;\
-	for (::test::test_case assert_test_case_block; ASSERT_GENERATE_LABEL(assert_test_suite_running);)\
+	for (::std::function<void()> assert_test_case_block; ASSERT_GENERATE_LABEL(assert_test_suite_running);)\
 		if (true)\
 			goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_SUITE_BLOCK);\
 		else\
 			while(ASSERT_GENERATE_LABEL(assert_test_suite_running))\
 				if (true) {\
-					::test::notify_test_suite_block_ended();\
+					assert_tests_manager.notify_test_suite_block_ended();\
 					ASSERT_GENERATE_LABEL(assert_test_suite_running) = false;\
 				} else\
 					ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_SUITE_BLOCK):
@@ -50,8 +56,8 @@
 	goto ASSERT_GENERATE_LABEL(ASSERT_LABEL_BEGIN_TEST_CASE_BLOCK);\
 	while(true)\
 		if (true) {\
-			::test::notify_test_case_discovered(test_case_description);\
-			::test::queue_test_for_execution(test_case_description, ::test::elements_discovered, assert_test_case_block);\
+			assert_tests_manager.notify_test_case_discovered(test_case_description);\
+			assert_tests_manager.queue_test_for_execution(test_case_description, ::test::elements_discovered, assert_test_case_block);\
 			::test::elements_discovered++;\
 			break;\
 		} else\
@@ -65,19 +71,6 @@
 		error_message << "expected " << #actual_value << ' ' << #comparison_operator << ' ' << expected_value;\
 		error_message << " but got " << actual_value;\
 		throw ::test::assert_failed(error_message.str());\
-	}
-
-#define begin_tests\
-	int main (void) {\
-		[[maybe_unused]] int assert_test_suite_block;\
-		::test::observers.emplace_back(new ::test::live_terminal);\
-		::test::observers.emplace_back(new ::test::json_logger(::std::cerr));\
-		::test::notify_tests_begun();
-
-#define end_tests\
-		::test::wait_tests();\
-		::test::notify_tests_ended(::test::successful_tests_count, ::test::failed_tests_count);\
-		return ::test::failed_tests_count;\
 	}
 
 #define setup(fixture_type, fixture_label)\
@@ -111,26 +104,7 @@
 
 namespace test {
 
-	extern std::list<parallel_tools::complex_atomic<std::unique_ptr<observer>>> observers;
-
 	extern unsigned elements_discovered;
-
-	extern std::atomic<unsigned> successful_tests_count;
-	extern std::atomic<unsigned> failed_tests_count;
-
-	extern parallel_tools::thread_pool tests_pool;
-	extern std::list<std::future<void>> tests_futures;
-
-	typedef std::function<void(void)> test_case;
-
-	class assert_failed : public std::exception {
-		private:
-			const std::string message;
-		public:
-			assert_failed(const std::string &message);
-
-			const char* what(void) const noexcept;
-	};
 
 	template<typename ConstexprStringFunction>
 	constexpr void is_logic_operator(ConstexprStringFunction string_function) {
@@ -143,33 +117,11 @@ namespace test {
 		);
 	}
 
-	void queue_test_for_execution (const std::string &test_case_description, unsigned row_in_terminal, const test_case& test);
-
-	void notify_tests_begun();
-	void notify_test_suite_block_begun(const std::string& test_suite_description);
-	void notify_test_case_discovered(const std::string& test_case_description);
-	void notify_test_suite_block_ended();
-	void notify_test_case_execution_begun(const std::string& test_case_description, unsigned row);
-	void notify_test_case_failed(
-		const std::string& test_case_description,
-		unsigned row,
-		std::chrono::high_resolution_clock::duration test_duration,
-		const std::string& reason
-	);
-	void notify_test_case_succeeded(
-		const std::string& test_case_description,
-		unsigned row,
-		std::chrono::high_resolution_clock::duration test_duration
-	);
-	void notify_tests_ended (unsigned successful_tests, unsigned failed_tests);
-
-	void wait_tests();
-
 	// dummy for checking test_suite scope
 	void assert_test_case_block(void);
 
 	// dummy for checking begin_tests scope
-	void assert_test_suite_block(void);
+	void assert_argc(void);
 
 	//dummy for checking setup redeclaration
 	void assert_setup_method(void);

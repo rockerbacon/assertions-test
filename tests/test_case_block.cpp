@@ -1,6 +1,6 @@
 #include <test.h>
 
-begin_tests {
+tests {
 
 	test_suite("test suite 1") {
 
@@ -32,4 +32,4 @@ begin_tests {
 
 	}
 
-} end_tests;
+}

@@ -2,7 +2,7 @@
 
 using namespace std::chrono_literals;
 
-begin_tests {
+tests {
 	test_suite("when using fixtures in test cases") {
 		setup (int*, my_int_fixture) {
 			int *processed_value = new int(10);
@@ -84,4 +84,4 @@ begin_tests {
 			assert(three_fixture, ==, 3.0);
 		};
 	}
-} end_tests;
+}
