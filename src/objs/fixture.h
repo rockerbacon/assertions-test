@@ -3,65 +3,72 @@
 #include <mutex>
 #include <type_traits>
 #include <functional>
+#include <atomic>
 #include <memory>
 
 namespace test {
 
-	template<typename setup_function>
+	template<typename fixture_type>
 	class fixture {
 		public:
-			typedef decltype(std::declval<setup_function>()()) fixture_type;
-			typedef std::function<void(fixture_type&)> teardown_function;
+			typedef fixture_type underlying_type;
 		private:
-			std::shared_ptr<std::mutex> mutex;
-			mutable bool initialized;
-			setup_function setup;
-			teardown_function teardown;
-			mutable std::shared_ptr<fixture_type> fixture_singleton;
+			mutable std::mutex mutex;
+			mutable std::atomic<bool> initialized;
+			std::function<fixture_type()> setup;
+			std::function<void(fixture_type&)> teardown;
+			mutable std::unique_ptr<fixture_type> fixture_singleton;
 
 		public:
-			fixture() = default;
-			fixture(decltype(setup) setup)
-				:	mutex(new std::mutex),
-					initialized(false),
-					setup(setup),
-					teardown([](fixture_type&){})
+			fixture() :
+				initialized(false),
+				teardown([](fixture_type&){})
 			{}
 
-			fixture(const fixture& other)
-				:	fixture(other.setup)
+			explicit fixture(const fixture& other) :
+				fixture()
 			{
-				this->set_teardown(other.teardown);
+				set_setup(other.setup);
+				set_teardown(other.teardown);
 			}
+
+			fixture(fixture&& other) :
+				initialized(other.initialized.load()),
+				setup(other.setup),
+				teardown(other.teardown),
+				fixture_singleton(std::move(other.fixture_singleton))
+			{}
 
 			~fixture() {
-				if (this->initialized && this->fixture_singleton.use_count() == 1) {
-					this->teardown(*this->fixture_singleton);
+				if (initialized.load()) {
+					teardown(*fixture_singleton);
 				}
 			}
 
-			operator fixture_type () const {
-				if (!this->initialized) {
-					std::lock_guard<std::mutex> lock(*this->mutex);
-					if (!this->initialized) {
-						this->fixture_singleton = std::make_shared<fixture_type>(this->setup());
-						this->initialized = true;
+			operator const fixture_type& () const {
+				if (!initialized.load()) {
+					std::lock_guard<std::mutex> lock(mutex);
+					if (!initialized.load()) {
+						fixture_singleton = std::make_unique<fixture_type>(setup());
+						initialized.store(true);
 					}
 				}
-				return *this->fixture_singleton;
+				return *fixture_singleton;
 			}
 
-			void set_teardown(decltype(teardown) teardown) {
+			void set_setup(const decltype(setup)& setup) {
+				this->setup = setup;
+			}
+
+			void set_teardown(const decltype(teardown)& teardown) {
 				this->teardown = teardown;
 			}
 	};
 
-}
-
-namespace std {
-	template<typename function_type>
-	typename test::fixture<function_type> copy(const test::fixture<function_type>& original) {
-		return test::fixture<function_type>(original);
+	template<typename fixture_type>
+	fixture<fixture_type> copy(const fixture<fixture_type>& original) {
+		return fixture<fixture_type>(original);
 	}
+
 }
 
