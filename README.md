@@ -11,5 +11,5 @@ Control structures were developed based on [Simon Tatham's work](https://www.chi
 This framework is readily available when using the [Assertions C++ Template](https://github.com/rockerbacon/assertions-template). In case you're using the [Assertions C++ Project Manager](https://github.com/rockerbacon/assertions) but don't have this framework available, the recommended way to add it is with the command:
 
 ```
-./dependencies.sh add git https://github.com/rockerbacon/assertions-test.git
+./dependencies.sh add git rockerbacon/assertions-test.git --local-only
 ```
