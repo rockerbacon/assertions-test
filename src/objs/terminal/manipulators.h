@@ -31,7 +31,9 @@ namespace terminal {
 	};
 
 	namespace icon {
-		constexpr unicode_char CIRCLE = "\u25CF";
+		constexpr unicode_char CIRCLE		= "\u25CF";
+		constexpr unicode_char CHECKMARK	= "\u2713";
+		constexpr unicode_char CROSS		= "\u2613";
 	};
 
 	constexpr style_code RESET_STYLE = 0;
