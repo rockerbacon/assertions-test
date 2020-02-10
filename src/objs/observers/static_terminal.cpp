@@ -13,10 +13,6 @@ static_terminal::static_terminal() :
 	out_stream(cout)
 {}
 
-void static_terminal::tests_begun() {
-	/* do nothing */
-}
-
 void static_terminal::tests_ended(
 	[[maybe_unused]] unsigned failed_tests,
 	[[maybe_unused]] unsigned successful_tests

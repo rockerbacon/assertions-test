@@ -10,7 +10,6 @@ namespace test {
 		public:
 			json_logger(std::ostream& out_stream);
 
-			void tests_begun ();
 			void tests_ended (unsigned failed_tests, unsigned successful_tests);
 			void test_suite_begun (const test_suite& test_suite);
 			void test_suite_ended (const test_suite& test_suite);

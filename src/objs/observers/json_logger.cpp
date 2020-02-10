@@ -10,10 +10,6 @@ json_logger::json_logger(ostream& out_stream) :
 	out_stream(out_stream)
 {}
 
-void json_logger::tests_begun () {
-	/* do nothing */
-}
-
 void json_logger::tests_ended (unsigned failed_tests, unsigned successful_tests) {
 	out_stream <<
 	"{"

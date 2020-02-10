@@ -19,9 +19,6 @@ tests_scope::tests_scope () :
 
 	observers.emplace_back(new static_terminal);
 	observers.emplace_back(new json_logger(cerr));
-	for (auto& observer : observers) observer.access([](auto& observer) {
-		observer->tests_begun();
-	});
 }
 
 tests_scope::~tests_scope () {
